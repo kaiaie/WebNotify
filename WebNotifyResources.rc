@@ -1,0 +1,66 @@
+#include "resource.h"
+
+/* Version constants */
+#define VS_FFI_FILEFLAGSMASK 0x3F
+#define VOS__WINDOWS32 4
+#define VFT_APP 1
+#define VFT2_UNKNOWN 0
+
+
+/* Icons */
+0 ICON resources\WebNotify.ico
+
+
+/* String table */
+STRINGTABLE
+BEGIN
+	IDS_APP_TITLE              "WebNotify 0.1"
+	IDS_TASKBAR_TOOLTIP        "Web Notifications"
+	IDS_ERROR_OUT_OF_MEMORY    "Out of memory!"
+END
+
+
+/* Menus */
+IDM_MAIN MENU
+BEGIN
+	POPUP "POPUP"
+	BEGIN
+		MENUITEM "&About",            IDM_ABOUT
+		MENUITEM "E&xit",             IDM_EXIT
+	END
+END
+
+
+/* Dialog boxes */
+
+
+/* Version info */
+1 VERSIONINFO
+FILEVERSION    0,1,0,1
+PRODUCTVERSION 0,1,0,1
+FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK
+FILEFLAGS      0
+FILEOS         0x40004 /* VOS_NT_WINDOWS32 */
+FILETYPE       VFT_APP
+FILESUBTYPE    VFT2_UNKNOWN
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904E4"
+		BEGIN
+			VALUE "CompanyName",      "Kaia Ltd.\r\nhttp://www.kaia.ie"
+			VALUE "FileDescription",  "Web notifications application"
+			VALUE "FileVersion",      "0.1.0.1"
+			VALUE "InternalName",     "webnotify"
+			VALUE "LegalCopyright",   "\251 2017 Kaia Ltd. All rights reserved."
+			VALUE "ProductName",      "webnotify"
+			VALUE "ProductVersion",   "0.1.0.1"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x409, 1252
+	END
+END
+
+
