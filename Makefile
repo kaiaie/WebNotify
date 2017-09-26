@@ -27,9 +27,9 @@ $(EXE): $(OBJ)
 
 .PHONY: clean
 clean:
-	cmd /c del $(EXE)
-	cmd /c del *.o
-	cmd /c del *.d
+	cmd /c "del $(EXE)"
+	cmd /c "del *.o"
+	cmd /c "del *.d"
 
 
 
