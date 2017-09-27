@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en-US">
+	<head>
+		<title>Help: WebNotify</title>
+	</head>
+	<body>
+		<h1>About</h1>
+		<p>
+			WebNotify allows you to display a notification on the computer&rsquo;s 
+			desktop by POSTing a message to one of the following endpoints.
+		</p>
+		<ul>
+			<li><code>POST /info</code>: Display an informational message</li>
+			<li><code>POST /warn</code>: Display a warning message</li>
+			<li><code>POST /error</code>: Display an error message</li>
+		</ul>
+		<p>
+			Messages should be encoded as <code>text/plain</code>. Short messages
+			are preferred. If the message contains the string &ldquo;!!&rdquo;, 
+			the first part of the message will be displayed as a title.
+		</p>
+		<footer>
+			&copy; 2017 <a href="http://www.kaia.ie">Kaia Limited</a>. All rights reserved.
+		</footer>
+	</body>
+</html>

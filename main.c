@@ -1,13 +1,18 @@
 #include <windows.h>
+#include "globals.h"
 #include "resource.h"
+#include "server.h"
 
 #define WM_TASKBAR_NOTIFY WM_APP + 1
 
 /* Global variables */
-static ATOM mainWindowClass;
+static ATOM    mainWindowClass;
 static LPCTSTR mainWindowClassName = TEXT("Kaia.HttpNotify.MainWindow");
-static LPTSTR gAppTitle;
-static HMENU ghMenu;
+static LPTSTR  gAppTitle;
+static HMENU   ghMenu;
+static NOTIFYICONDATA nid;
+
+Globals globals;
 
 /* Window functions */
 static HWND CreateMainWindow(HINSTANCE hInstance, HICON hIcon);
@@ -16,6 +21,7 @@ static LRESULT APIENTRY MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 
 static void DoShowMenu(HWND hWnd, int x, int y);
 static void DoAboutApp(HWND hWnd);
+static void DoCopyData(HWND hWnd, COPYDATASTRUCT *data);
 
 
 /* Utility functions */
@@ -29,11 +35,45 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int nCm
 	ghMenu = LoadMenu(hInstance, MAKEINTRESOURCE(IDM_MAIN));
 	MSG msg;
 	HICON hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(0));
-	HWND hWndMain = CreateMainWindow(hInstance, hIcon);	
-	//NOTIFYICONDATA nid;
-	//nid.cbSize = sizeof(nid);
-	//nid.hWnd = hWndMain;
+	HWND hWndMain = CreateMainWindow(hInstance, hIcon);
 	
+	if (hWndMain == NULL)
+	{
+		return 1;
+	}
+	
+	globals.hInstance = hInstance;
+	globals.hWndMain = hWndMain;
+	globals.bIsRunning = TRUE;
+	globals.nServerPort = 54841; /* TODO: Allow port to be set on the command line */
+	
+	/* Initialise notification area icon */
+	nid.cbSize           = sizeof(nid);
+	nid.hWnd             = hWndMain;
+	nid.uID              = 1;
+	nid.uFlags           = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+	nid.uCallbackMessage = WM_TASKBAR_NOTIFY;
+	nid.hIcon            = hIcon;
+	lstrcpyn(nid.szTip, LoadStringFromResource(hInstance, IDS_TASKBAR_TOOLTIP), 63);
+	Shell_NotifyIcon(NIM_ADD, &nid);
+	
+	/* Create server thread to listen for HTTP connections */
+	HANDLE hThread = CreateThread(
+		NULL,
+		0,
+		HandleHttpConnections,
+		&globals,
+		0,
+		NULL
+	);
+	DWORD dwThreadStatus;
+	if (!GetExitCodeThread(hThread, &dwThreadStatus) || dwThreadStatus != STILL_ACTIVE)
+	{
+		DisplayErrorMessage(hInstance, hWndMain, IDS_ERROR_THREAD);
+		DestroyWindow(hWndMain);
+		return 1;
+	}
+		
 	/* Start message loop (keep window invisible; it's only there to get the
 	** notification area messages)
 	*/
@@ -44,6 +84,10 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int nCm
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+	Shell_NotifyIcon(NIM_DELETE, &nid);
+	
+	globals.bIsRunning = FALSE;
+	WaitForSingleObject(hThread, INFINITE);
 	
 	return msg.wParam;	
 }
@@ -110,7 +154,8 @@ LoadStringFromResource(HINSTANCE hInstance, UINT uID)
 		DisplayErrorMessage(hInstance, (HWND)NULL, IDS_ERROR_OUT_OF_MEMORY);
 		ExitProcess(1);
 	}
-	do {
+	do
+	{
 		result = LoadString(hInstance, uID, lpBuffer, dwBufferSize);
 		if (result == 0) 
 		{ 
@@ -156,6 +201,9 @@ MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_CONTEXTMENU:
 			DoShowMenu(hwnd, LOWORD(lParam), HIWORD(lParam));
 			return 0;
+		case WM_COPYDATA:
+			DoCopyData(hwnd, (COPYDATASTRUCT*)lParam);
+			return TRUE;
 		case WM_COMMAND:
 			wCmdID = LOWORD(wParam);
 			if (wCmdID != IDM_EXIT)
@@ -197,6 +245,12 @@ static void
 DoAboutApp(HWND hWnd)
 {
 	MessageBox(hWnd, TEXT("About"), gAppTitle, MB_OK | MB_ICONINFORMATION);
+}
+
+
+static void DoCopyData(HWND hWnd, COPYDATASTRUCT *data)
+{
+
 }
 
 

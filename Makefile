@@ -1,8 +1,8 @@
-SRC:=main.c
+SRC:=main.c server.c
 RC:=WebNotifyResources.rc
 OBJ:=$(patsubst %.c,%.o,$(SRC)) $(patsubst %.rc,%.o,$(RC))
 CCFLAGS:=-Wall -Wpedantic -g
-LDFLAGS:=-mwindows
+LDFLAGS:=-lws2_32 -mwindows
 EXE:=WebNotify.exe
 
 .PHONY: all

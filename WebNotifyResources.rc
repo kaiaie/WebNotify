@@ -17,6 +17,7 @@ BEGIN
 	IDS_APP_TITLE              "WebNotify 0.1"
 	IDS_TASKBAR_TOOLTIP        "Web Notifications"
 	IDS_ERROR_OUT_OF_MEMORY    "Out of memory!"
+	IDS_ERROR_THREAD           "Thread failed to start"
 END
 
 
@@ -31,7 +32,9 @@ BEGIN
 END
 
 
-/* Dialog boxes */
+/* Custom resources */
+IDR_HELP_TEXT HTMLFILE resources\help.html
+IDR_404       HTMLFILE resources\404.html
 
 
 /* Version info */
