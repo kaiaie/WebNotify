@@ -1,3 +1,4 @@
+#include <windows.h>
 #include <winsock.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,9 +12,11 @@
 #define writestr(fd, str) send(fd, str, strlen(str), 0)
 
 static void   SendHelpPage(int socket);
+static void   Send400Page(int socket);
 static void   Send404Page(int socket);
 static void   Send500Page(int socket);
 static LPVOID LoadPageResource(DWORD resourceId, LPDWORD resourceSize);
+static void   ShowNotification(char *buffer, PNOTIFYICONDATA nid, DWORD dwNotificationType);
 
 DWORD WINAPI 
 HandleHttpConnections(LPVOID lpParam)
@@ -79,6 +82,15 @@ HandleHttpConnections(LPVOID lpParam)
 			{
 				SendHelpPage(clientSocket);
 			}
+			else if (strncmp(buffer, "POST /info", 10) == 0) {
+				ShowNotification(buffer, &(globals->nid), NIIF_INFO);
+			}
+			else if (strncmp(buffer, "POST /warn", 10) == 0) {
+				ShowNotification(buffer, &(globals->nid), NIIF_WARNING);
+			}
+			else if (strncmp(buffer, "POST /error", 11) == 0) {
+				ShowNotification(buffer, &(globals->nid), NIIF_ERROR);
+			}
 			else
 			{
 				Send404Page(clientSocket);
@@ -95,17 +107,30 @@ HandleHttpConnections(LPVOID lpParam)
 }
 
 
-static void SendHelpPage(int socket)
+static void
+SendHelpPage(int socket)
 {
 	writestr(socket, "HTTP/1.1 200 OK\n");
 	writestr(socket, "Content-Type: text/html\n\n");
 	DWORD pageSize;
-	char *page = (char *)LoadPageResource(IDR_HELP_TEXT, &pageSize);
+	char *page = (char *)LoadPageResource(IDR_HOMEPAGE, &pageSize);
 	send(socket, page, pageSize, 0);
 }
 
 
-static void Send404Page(int socket)
+static void
+Send400Page(int socket)
+{
+	writestr(socket, "HTTP/1.1 400 Bad Request\n");
+	writestr(socket, "Content-Type: text/html\n\n");	
+	DWORD pageSize;
+	char *page = (char *)LoadPageResource(IDR_400, &pageSize);
+	send(socket, page, pageSize, 0);
+}
+
+
+static void
+Send404Page(int socket)
 {
 	writestr(socket, "HTTP/1.1 404 Not Found\n");
 	writestr(socket, "Content-Type: text/html\n\n");	
@@ -114,7 +139,9 @@ static void Send404Page(int socket)
 	send(socket, page, pageSize, 0);
 }
 
-static void Send500Page(int socket)
+
+static void
+Send500Page(int socket)
 {
 	writestr(socket, "HTTP/1.1 500 Internal Server Error\n");
 	writestr(socket, "Content-Type: text/html\n\n");	
@@ -123,7 +150,9 @@ static void Send500Page(int socket)
 	send(socket, page, pageSize, 0);
 }
 
-static LPVOID LoadPageResource(DWORD resourceId, LPDWORD resourceSize)
+
+static LPVOID
+LoadPageResource(DWORD resourceId, LPDWORD resourceSize)
 {
 	HMODULE hModule = GetModuleHandle(NULL);
 	HRSRC hResInfo = FindResource(hModule, MAKEINTRESOURCE(resourceId),
@@ -131,4 +160,12 @@ static LPVOID LoadPageResource(DWORD resourceId, LPDWORD resourceSize)
 	*resourceSize = SizeofResource(hModule, hResInfo);
 	HGLOBAL rcData = LoadResource(hModule, hResInfo);
 	return LockResource(rcData);
+}
+
+
+static void
+ShowNotification(char *buffer, PNOTIFYICONDATA nid, DWORD dwNotificationType)
+{
+	nid->dwInfoFlags = dwNotificationType;
+	Shell_NotifyIcon(NIM_MODIFY, nid);
 }

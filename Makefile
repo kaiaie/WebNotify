@@ -1,7 +1,9 @@
 SRC:=main.c server.c
 RC:=WebNotifyResources.rc
-OBJ:=$(patsubst %.c,%.o,$(SRC)) $(patsubst %.rc,%.o,$(RC))
-CCFLAGS:=-Wall -Wpedantic -g
+RCO:=$(patsubst %.rc,%.o,$(RC))
+RES:=$(wildcard resources/*.*)
+OBJ:=$(patsubst %.c,%.o,$(SRC)) $(RCO)
+CCFLAGS:=-Wall -Wpedantic -g -DWINVER=0x0501 -D_WIN32_WINNT=0x0501 -D_WIN32_IE=0x0500
 LDFLAGS:=-lws2_32 -mwindows
 EXE:=WebNotify.exe
 
@@ -22,14 +24,15 @@ $(EXE): $(OBJ)
 %.o: %.c
 	gcc $(CCFLAGS) -c $< -o $@
 	
-%.o: %.rc
+$(RCO): $(RC) resource.h $(RES)
 	windres -i $< -o $@
 
 .PHONY: clean
 clean:
-	cmd /c "del $(EXE)"
-	cmd /c "del *.o"
-	cmd /c "del *.d"
+	cmd /c "DEL /Q $(EXE)"
+	cmd /c "DEL /Q *.o"
+	cmd /c "DEL /Q *.d"
 
-
-
+.PHONY: tags
+tags: $(SRC)
+	ctags -V --recurse

@@ -10,7 +10,6 @@ static ATOM    mainWindowClass;
 static LPCTSTR mainWindowClassName = TEXT("Kaia.HttpNotify.MainWindow");
 static LPTSTR  gAppTitle;
 static HMENU   ghMenu;
-static NOTIFYICONDATA nid;
 
 Globals globals;
 
@@ -48,14 +47,15 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int nCm
 	globals.nServerPort = 54841; /* TODO: Allow port to be set on the command line */
 	
 	/* Initialise notification area icon */
-	nid.cbSize           = sizeof(nid);
-	nid.hWnd             = hWndMain;
-	nid.uID              = 1;
-	nid.uFlags           = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-	nid.uCallbackMessage = WM_TASKBAR_NOTIFY;
-	nid.hIcon            = hIcon;
-	lstrcpyn(nid.szTip, LoadStringFromResource(hInstance, IDS_TASKBAR_TOOLTIP), 63);
-	Shell_NotifyIcon(NIM_ADD, &nid);
+	PNOTIFYICONDATA nid   = &(globals.nid);
+	nid->cbSize           = sizeof(globals.nid);
+	nid->hWnd             = hWndMain;
+	nid->uID              = 1;
+	nid->uFlags           = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+	nid->uCallbackMessage = WM_TASKBAR_NOTIFY;
+	nid->hIcon            = hIcon;
+	lstrcpyn(nid->szTip, LoadStringFromResource(hInstance, IDS_TASKBAR_TOOLTIP), 63);
+	Shell_NotifyIcon(NIM_ADD, nid);
 	
 	/* Create server thread to listen for HTTP connections */
 	HANDLE hThread = CreateThread(
@@ -84,7 +84,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int nCm
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-	Shell_NotifyIcon(NIM_DELETE, &nid);
+	Shell_NotifyIcon(NIM_DELETE, nid);
 	
 	globals.bIsRunning = FALSE;
 	WaitForSingleObject(hThread, INFINITE);
@@ -216,7 +216,6 @@ MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			/* FALL THROUGH */
 		case WM_CLOSE:
-			// if (bNotifyIconCreated) Shell_NotifyIcon(NIM_DELETE, &nid);
 			DestroyWindow(hwnd);
 			PostQuitMessage(0);
 			return 0;

@@ -14,7 +14,8 @@
 #define IDM_EXIT     0x303
 
 /* Custom resources */
-#define IDR_HELP_TEXT 0x400
+#define IDR_HOMEPAGE  0x400
+#define IDR_400       0x590
 #define IDR_404       0x594
 #define IDR_500       0x5F4
 

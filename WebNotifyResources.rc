@@ -33,8 +33,10 @@ END
 
 
 /* Custom resources */
-IDR_HELP_TEXT HTMLFILE resources\help.html
+IDR_HOMEPAGE  HTMLFILE resources\help.html
+IDR_400       HTMLFILE resources\400.html
 IDR_404       HTMLFILE resources\404.html
+IDR_500       HTMLFILE resources\500.html
 
 
 /* Version info */
