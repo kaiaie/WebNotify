@@ -2,25 +2,32 @@
 <html lang="en-US">
 	<head>
 		<title>Help: WebNotify</title>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 	</head>
 	<body>
-		<h1>About</h1>
-		<p>
-			WebNotify allows you to display a notification on the computer&rsquo;s 
-			desktop by POSTing a message to one of the following endpoints.
-		</p>
-		<ul>
-			<li><code>POST /info</code>: Display an informational message</li>
-			<li><code>POST /warn</code>: Display a warning message</li>
-			<li><code>POST /error</code>: Display an error message</li>
-		</ul>
-		<p>
-			Messages should be encoded as <code>text/plain</code>. Short messages
-			are preferred. If the message contains the string &ldquo;!!&rdquo;, 
-			the first part of the message will be displayed as a title.
-		</p>
-		<footer>
+		<header class="container">
+			<h1>About WebNotify</h1>
+		<header>
+		<main class="container">
+			<p>
+				WebNotify allows you to display a text message as a noti&filig;cation &ldquo;balloon&rdquo; on the computer&rsquo;s 
+				desktop by POSTing the message to one of the following endpoints.
+			</p>
+			<ul>
+				<li><code>POST /info</code>: Display an informational message</li>
+				<li><code>POST /warn</code>: Display a warning message</li>
+				<li><code>POST /error</code>: Display an error message</li>
+			</ul>
+			<p>
+				The noti&filig;cation message should be sent in the request body, encoded as <code>text/plain</code>. 
+				The maximum supported message length supported by Windows is <em>256 characters</em>. If the request body 
+				contains the string &ldquo;!!&rdquo;, the &filig;rst part of the message will be displayed as a title. The 
+				maximum length of the title supported by Windows is <em>64 characters</em>.
+			</p>
+		</main>
+		<footer class="container">
 			&copy; 2017 <a href="http://www.kaia.ie">Kaia Limited</a>. All rights reserved.
 		</footer>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 	</body>
 </html>

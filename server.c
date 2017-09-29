@@ -16,7 +16,8 @@ static void   Send400Page(int socket);
 static void   Send404Page(int socket);
 static void   Send500Page(int socket);
 static LPVOID LoadPageResource(DWORD resourceId, LPDWORD resourceSize);
-static void   ShowNotification(char *buffer, PNOTIFYICONDATA nid, DWORD dwNotificationType);
+static void   ShowNotification(int socket, char *buffer, PNOTIFYICONDATA nid, DWORD dwNotificationType);
+static BOOL   ParseRequest(char *buffer, PNOTIFYICONDATA nid);
 
 DWORD WINAPI 
 HandleHttpConnections(LPVOID lpParam)
@@ -74,7 +75,7 @@ HandleHttpConnections(LPVOID lpParam)
 			Sleep(0L);
 			continue;
 		}
-		char *buffer = malloc(BUF_LEN);
+		char *buffer = calloc(BUF_LEN, sizeof(char));
 		if (recv(clientSocket, buffer, BUF_LEN, 0) > 0)
 		{
 			/* Decode endpoint */
@@ -83,18 +84,22 @@ HandleHttpConnections(LPVOID lpParam)
 				SendHelpPage(clientSocket);
 			}
 			else if (strncmp(buffer, "POST /info", 10) == 0) {
-				ShowNotification(buffer, &(globals->nid), NIIF_INFO);
+				ShowNotification(clientSocket, buffer, &(globals->nid), NIIF_INFO);
 			}
 			else if (strncmp(buffer, "POST /warn", 10) == 0) {
-				ShowNotification(buffer, &(globals->nid), NIIF_WARNING);
+				ShowNotification(clientSocket, buffer, &(globals->nid), NIIF_WARNING);
 			}
 			else if (strncmp(buffer, "POST /error", 11) == 0) {
-				ShowNotification(buffer, &(globals->nid), NIIF_ERROR);
+				ShowNotification(clientSocket, buffer, &(globals->nid), NIIF_ERROR);
 			}
 			else
 			{
 				Send404Page(clientSocket);
 			}
+		}
+		else
+		{
+			Send500Page(clientSocket);
 		}
 		free(buffer);
 		closesocket(clientSocket);
@@ -164,8 +169,76 @@ LoadPageResource(DWORD resourceId, LPDWORD resourceSize)
 
 
 static void
-ShowNotification(char *buffer, PNOTIFYICONDATA nid, DWORD dwNotificationType)
+ShowNotification(int socket, char *buffer, PNOTIFYICONDATA nid, DWORD dwNotificationType)
 {
+	if (!ParseRequest(buffer, nid))
+	{
+		Send400Page(socket);
+		return;
+	}
 	nid->dwInfoFlags = dwNotificationType;
-	Shell_NotifyIcon(NIM_MODIFY, nid);
+	nid->uFlags = (nid->uFlags) | NIF_INFO;
+	BOOL result = Shell_NotifyIcon(NIM_MODIFY, nid);
+	if (!result)
+	{
+		DWORD dwErrorCode = GetLastError();
+	}
+	writestr(socket, "HTTP/1.1 200 OK\n");
+	writestr(socket, "Content-Length: 0\n\n");
+}
+
+
+static BOOL
+ParseRequest(char *buffer, PNOTIFYICONDATA nid)
+{
+	const char CRLF[3]     = "\r\n";
+	const char CRLFCRLF[5] = "\r\n\r\n";
+	const char delim[3]    = "!!";
+	
+	/* Look for the Content-Type header and verify that it's text/plain */
+	BOOL bFound = FALSE;
+	char *p = buffer;
+	for (;;)
+	{
+		p = strstr(p, CRLF);
+		if (p == NULL) break;
+		p += strlen(CRLF);
+		if (strncmp(p, "Content-Type: ", 14) == 0 && strncmp(p, "Content-Type: text/plain", 24) == 0)
+		{
+			bFound = TRUE;
+			break;
+		}
+	}
+	if (!bFound)
+	{
+		return FALSE;
+	}
+
+	/* Look for the content */
+	if ((p = strstr(p, CRLFCRLF)) == NULL)
+	{
+		return FALSE;
+	}
+	p += strlen(CRLFCRLF);
+	
+	char *q = NULL;
+	if ((q = strstr(p, delim)) != NULL)
+	{
+		/* Message includes title */
+		strncpy(nid->szInfoTitle, p, 64);
+		if ((p = strstr(nid->szInfoTitle, delim)) != NULL)
+		{
+			*p = '\0';
+		}
+		q += strlen(delim);
+		strncpy(nid->szInfo, q, 256);
+	}
+	else
+	{
+		/* No title */
+		nid->szInfoTitle[0] = '\0';
+		strncpy(nid->szInfo, p, 256);
+	}
+	
+	return TRUE;
 }

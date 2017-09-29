@@ -1,4 +1,6 @@
 #include <windows.h>
+#include <stdio.h>
+#include <string.h>
 #include "globals.h"
 #include "resource.h"
 #include "server.h"
@@ -20,8 +22,6 @@ static LRESULT APIENTRY MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 
 static void DoShowMenu(HWND hWnd, int x, int y);
 static void DoAboutApp(HWND hWnd);
-static void DoCopyData(HWND hWnd, COPYDATASTRUCT *data);
-
 
 /* Utility functions */
 static LPTSTR LoadStringFromResource(HINSTANCE hInstance, UINT uID);
@@ -48,12 +48,14 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int nCm
 	
 	/* Initialise notification area icon */
 	PNOTIFYICONDATA nid   = &(globals.nid);
-	nid->cbSize           = sizeof(globals.nid);
+	ZeroMemory(nid, sizeof(NOTIFYICONDATA));
+	nid->cbSize           = NOTIFYICONDATA_V2_SIZE; /* See https://stackoverflow.com/questions/775700/why-arent-shell-notifyicon-balloon-tips-working */
 	nid->hWnd             = hWndMain;
 	nid->uID              = 1;
-	nid->uFlags           = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+	nid->uFlags           = NIF_ICON | NIF_MESSAGE | NIF_TIP | 0x00000080;
 	nid->uCallbackMessage = WM_TASKBAR_NOTIFY;
 	nid->hIcon            = hIcon;
+	nid->uVersion         = NOTIFYICON_VERSION_4;
 	lstrcpyn(nid->szTip, LoadStringFromResource(hInstance, IDS_TASKBAR_TOOLTIP), 63);
 	Shell_NotifyIcon(NIM_ADD, nid);
 	
@@ -201,9 +203,6 @@ MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_CONTEXTMENU:
 			DoShowMenu(hwnd, LOWORD(lParam), HIWORD(lParam));
 			return 0;
-		case WM_COPYDATA:
-			DoCopyData(hwnd, (COPYDATASTRUCT*)lParam);
-			return TRUE;
 		case WM_COMMAND:
 			wCmdID = LOWORD(wParam);
 			if (wCmdID != IDM_EXIT)
@@ -228,6 +227,7 @@ MainWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 static void 
 DoShowMenu(HWND hWnd, int x, int y)
 {
+	SetForegroundWindow(hWnd);
 	TrackPopupMenu(
 		ghMenu,
 		TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON,
@@ -243,13 +243,9 @@ DoShowMenu(HWND hWnd, int x, int y)
 static void
 DoAboutApp(HWND hWnd)
 {
-	MessageBox(hWnd, TEXT("About"), gAppTitle, MB_OK | MB_ICONINFORMATION);
-}
-
-
-static void DoCopyData(HWND hWnd, COPYDATASTRUCT *data)
-{
-
+	char buffer[256];
+	sprintf(buffer, "http://localhost:%d/", globals.nServerPort);
+	ShellExecute(NULL, "open", buffer, NULL, NULL, SW_SHOW);
 }
 
 

@@ -3,7 +3,7 @@ RC:=WebNotifyResources.rc
 RCO:=$(patsubst %.rc,%.o,$(RC))
 RES:=$(wildcard resources/*.*)
 OBJ:=$(patsubst %.c,%.o,$(SRC)) $(RCO)
-CCFLAGS:=-Wall -Wpedantic -g -DWINVER=0x0501 -D_WIN32_WINNT=0x0501 -D_WIN32_IE=0x0500
+CCFLAGS:=-Wall -Wpedantic -g -DWINVER=0x0601 -D_WIN32_WINNT=0x0601 -D_WIN32_IE=0x0500
 LDFLAGS:=-lws2_32 -mwindows
 EXE:=WebNotify.exe
 
