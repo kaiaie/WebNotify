@@ -14,7 +14,7 @@ displayed as a title. The maximum length of the title supported by Windows is *6
 
 ## Prerequisites
 
-	- Windows Vista or higher
-	- [Mingw32](http://mingw.org) compiler and build tools
+- Windows Vista or higher
+- [Mingw32](http://mingw.org) compiler and build tools
 
 © 2017 Kaia Limited. All rights reserved.
